@@ -1,144 +1,135 @@
-
-#idea : friendship points . $1 = 1 point
-# friendship leaderboard = in pairs
-# ranks update every month
-# resets to  0 every 60 days
-# this ranking is global; ranks via mutual investment
-
-#SHAME SYSTEM:
-# if you spend less than $20 for your friend, you will get shamed
-
-# NEGLECT EXPOSURE:
-# shows who top pairs ignore the most in their list
-# special tags for "pathetic friendships" (<$20)
-
-#IMBALANCE DETECTION
-# will detect who spends more on who per pair 
-
 from datetime import datetime
 from typing import Dict, List, Tuple
 
-class Friendship:
+class FriendshipPair:
+    """Tracks friendship points between two users"""
     def __init__(self, user1: str, user2: str):
-        #Tracks mutual friendship metrics between two people
-        #alpabetically sorted
-        self.pair = (user1, user2)
-        #pair's combined spending  
-        self.total_investment = 0
-        #user1's spending minus user's 2    
-        self.balance = 0             
+        # Store the pair names in alphabetical order
+        self.pair = tuple(sorted((user1, user2)))
+        
+        # Monthly points reset every new month
+        self.monthly_points = 0
+        
+        # Tracks points given from user1 to user2
+        self.user1_to_user2 = 0
+        
+        # Tracks points given from user2 to user1
+        self.user2_to_user1 = 0
+        
+        # Last interaction date for point expiry
         self.last_interaction = None
 
-class GlobalFriendshipRanker:
+class GlobalFriendshipLeaderboard:
+    """Worldwide monthly ranking of strongest friendships"""
     def __init__(self):
-        #Worldwide friendship comparison system
-        self.all_pairs: Dict[Tuple[str, str], Friendship] = {}
-        self.user_data: Dict[str, List[str]] = {}  # {"Alex": ["Jordan", "Taylor"]}
+        # Stores all friendship pairs: {(user1,user2): FriendshipPair}
+        self.all_pairs: Dict[Tuple[str, str], FriendshipPair] = {}
+        
+        # Current month tracker for auto-resets
+        self.current_month = datetime.now().month
+        
+        # Tiered ranking titles 
+        self.rank_titles = [
+            "👑 ULTIMATE BESTIES",      # 1st place
+            "💎 STRONG CONNECTION",     # 2nd place
+            "🌟 ALMOST ACCEPTABLE",     # 3rd place
+            "💔 ONE-SIDED FRIENDSHIP",  # 4th place
+            "🚮 TRASH TIER PAIR"        # 5th place
+        ]
 
-    def record_gift(self, giver: str, receiver: str, amount: float):
-        """Log a gift between two users"""
+    def record_gift(self, giver: str, receiver: str, points: int):
+        """Log friendship points between two users"""
         # Create pair key (alphabetical order)
         pair_key = tuple(sorted((giver, receiver)))
         
-        # Initialize friendship if new
+        # Initialize new friendship if first interaction
         if pair_key not in self.all_pairs:
-            self.all_pairs[pair_key] = Friendship(*pair_key)
-            for user in pair_key:
-                if user not in self.user_data:
-                    self.user_data[user] = []
-                if user == giver:
-                    self.user_data[user].append(receiver)
+            self.all_pairs[pair_key] = FriendshipPair(*pair_key)
         
-        # Update friendship metrics
-        friendship = self.all_pairs[pair_key]
-        friendship.total_investment += amount
-        friendship.last_interaction = datetime.now()
+        # Get the friendship record
+        pair = self.all_pairs[pair_key]
         
-        # Adjust balance (positive = first user invested more)
-        if giver == pair_key[0]:
-            friendship.balance += amount
-        else:
-            friendship.balance -= amount
+        # Update monthly totals
+        pair.monthly_points += points
+        pair.last_interaction = datetime.now()
+        
+        # Track direction of points
+        if giver == pair_key[0]:  # user1 gave to user2
+            pair.user1_to_user2 += points
+        else:  # user2 gave to user1
+            pair.user2_to_user1 += points
 
-    def get_global_rankings(self) -> List[Tuple[str, str, int]]:
-        """Rank all friendships worldwide by total investment"""
+    def _reset_monthly_points(self):
+        """Reset monthly counts if new month detected"""
+        if datetime.now().month != self.current_month:
+            print("\n✨ NEW MONTH - Friendship points reset! ✨")
+            for pair in self.all_pairs.values():
+                pair.monthly_points = 0
+            self.current_month = datetime.now().month
+
+    def get_ranked_pairs(self) -> List[Tuple]:
+        """Generate monthly rankings with imbalance data"""
+        self._reset_monthly_points()
+        
         ranked = []
-        for pair, data in self.all_pairs.items():
-            ranked.append((*pair, data.total_investment))
+        for pair_key, pair_data in self.all_pairs.items():
+            # Calculate imbalance (absolute difference)
+            imbalance = abs(pair_data.user1_to_user2 - pair_data.user2_to_user1)
+            
+            # Package data for sorting
+            ranked.append((
+                *pair_key,                     # user1, user2
+                pair_data.monthly_points,      # total points
+                pair_data.user1_to_user2,      # user1's contribution
+                pair_data.user2_to_user1,      # user2's contribution
+                imbalance                      # relationship imbalance
+            ))
+        
+        # Sort by monthly points (descending)
         return sorted(ranked, key=lambda x: x[2], reverse=True)
 
-    def generate_shame_report(self, user: str) -> List[Tuple[str, int]]:
-        """List a user's most neglected friends"""
-        if user not in self.user_data:
-            return []
-            
-        neglected = []
-        for friend in self.user_data[user]:
-            pair_key = tuple(sorted((user, friend)))
-            investment = self.all_pairs[pair_key].balance if user == pair_key[0] else -self.all_pairs[pair_key].balance
-            neglected.append((friend, investment))
+    def display_leaderboard(self):
+        """Print the monthly global rankings"""
+        print(f"\n🌍 GLOBAL FRIENDSHIP LEADERBOARD - {datetime.now().strftime('%B %Y')} 🌍")
+        print("💖 Ranked by total friendship points exchanged this month")
+        print("-"*60)
         
-        return sorted(neglected, key=lambda x: x[1])
-
-    def print_global_leaderboard(self):
-        """Display worldwide rankings with brutal honesty"""
-        print("\n🌍 GLOBAL BESTIE RANKINGS 🌍")
-        print("⚖️ (Combined spending between pairs)")
-        print("-"*40)
+        # Get sorted rankings
+        rankings = self.get_ranked_pairs()
         
-        rankings = self.get_global_rankings()
-        
-        for i, (user1, user2, total) in enumerate(rankings[:10], 1):
-            # Determine relationship status
-            pair_data = self.all_pairs[(user1, user2)]
+        # Display top pairs with savage commentary
+        for i, (user1, user2, total, u1_pts, u2_pts, imbalance) in enumerate(rankings[:10], 1):
+            # Select appropriate title
+            title = self.rank_titles[min(i-1, len(self.rank_titles)-1)]
             
-            if i == 1:
-                title = "👑 ULTIMATE SOULMATES"
-            elif i <= 3:
-                title = "💎 TRUE FRIENDS"
-            elif total < 100:
-                title = "💩 CHEAP FRIENDS"
-            else:
-                title = f"#{i} FRIENDS"
+            # Print pair ranking
+            print(f"\n{title} #{i}: {user1} & {user2}")
+            print(f"   Monthly Points: {total}")
+            print(f"   Breakdown: {user1} → {user2}: {u1_pts} pts | {user2} → {user1}: {u2_pts} pts")
             
-            print(f"\n{title}: {user1} & {user2}")
-            print(f"   Total spent on each other: ${total}")
+            # Shame imbalances (>60% difference)
+            if imbalance > total * 0.6:
+                dominant = user1 if u1_pts > u2_pts else user2
+                passive = user2 if dominant == user1 else user1
+                print(f"   ⚠️ {dominant} carries {passive} ({imbalance} pt difference)")
             
-            # Shame imbalance
-            imbalance = abs(pair_data.balance)
-            if imbalance > total * 0.7:  # 70%+ imbalance
-                richer = user1 if pair_data.balance > 0 else user2
-                poorer = user2 if pair_data.balance > 0 else user1
-                print(f"   ⚠️ {richer} carries {poorer} (${imbalance} difference)")
-            
-            # Shame neglect
+            # Special insults for weak friendships
             if total < 50:
-                print("   💔 EMBARRASSING - do they even care?")
-            elif total < 20:
-                print("   🚮 TRASH TIER - just delete each other")
-
-        # Print shame list for top pairs
-        if rankings:
-            print("\n🔥 TOP PAIR NEGLECT LISTS 🔥")
-            for user in rankings[0][:2]:
-                neglected = self.generate_shame_report(user)
-                if neglected and neglected[0][1] < 20:
-                    print(f"\n{user}'s most neglected friends:")
-                    for friend, amount in neglected[:3]:
-                        if amount < 20:
-                            print(f"   💀 {friend}: ${amount} (PATHETIC)")
-                        elif amount < 50:
-                            print(f"   🥀 {friend}: ${amount} (Neglected)")
+                print("   💔 Pathetic effort - do they even care?")
+            if total < 20:
+                print("   🚮 Disgraceful - why are they friends?")
 
 # Example Usage
-world_rankings = GlobalFriendshipRanker()
-
-# Record global gifts
-world_rankings.record_gift("Alex", "Jordan", 200)
-world_rankings.record_gift("Jordan", "Alex", 180)
-world_rankings.record_gift("Alex", "Taylor", 50)
-world_rankings.record_gift("Jordan", "Taylor", 15)
-world_rankings.record_gift("Alex", "Casey", 10)  # Shameful
-
-# Display global truth
-world_rankings.print_global_leaderboard()
+if __name__ == "__main__":
+    # Initialize global leaderboard
+    world_leaderboard = GlobalFriendshipLeaderboard()
+    
+    # Record friendship interactions (1 point = $1 equivalent)
+    world_leaderboard.record_gift("Alex", "Jordan", 150)
+    world_leaderboard.record_gift("Jordan", "Alex", 50)  # Jordan is less invested
+    world_leaderboard.record_gift("Taylor", "Casey", 200)
+    world_leaderboard.record_gift("Casey", "Taylor", 180)  # Strong mutual friendship
+    world_leaderboard.record_gift("Drew", "Morgan", 10)    # Weak friendship
+    
+    # Display the brutal truth
+    world_leaderboard.display_leaderboard()
