@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Your Wishlist</title>
+</head>
+<body style="font-family: Arial; padding: 40px;">
+  <a href="/samWish">⬅️ Back to Search</a>
+  <h1>🛍️ Your Wishlist</h1>
+  <div id="wishlist-container"></div>
+  <br>
+  <button onclick="clearWishlist()" style="padding: 10px 20px; margin-bottom: 20px;">🗑️ Clear Wishlist</button>
+  <br><a href="/samWish">⬅️ Back to Search</a>
+
+  <script>
+    function renderWishlist() {
+      const items = JSON.parse(localStorage.getItem('wishlistSam')) || [];
+      const container = document.getElementById('wishlist-container');
+
+      if (items.length === 0) {
+        container.innerHTML = "<p>No items added yet.</p>";
+        return;
+      }
+
+      container.innerHTML = items.map((item, index) => `
+        <div style="border:1px solid #ccc;padding:15px;margin-bottom:15px;">
+          <a href="${item.link}" target="_blank"><img src="${item.image}" style="max-width:100px;"></a><br>
+          <strong>${item.title}</strong><br>
+          <p>${item.description}</p>
+          <a href="${item.link}" target="_blank">Amazon Link</a><br/>
+          <p>Find similar:</p>
+          <table border="1">
+          <td>
+            <a href="https://www.amazon.sg/s?k=${item.title}" target="_blank"><img width="100px" height="auto" src="img/amazon-logo.png" alt="amazonImage"></a>
+          </td>
+          <td>
+            <a href="https://shopee.sg/search?keyword=${item.title}" target="_blank"><img width="100px" height="125px" src="img/Shopee_logo.webp" alt="shopeeImage"></a><br/>
+          </td>
+          </table>
+          <button onclick="removeItem(${index})" style="margin-top: 10px;">❌ Remove</button>
+        </div>
+      `).join('');
+    }
+
+    function removeItem(index) {
+      let items = JSON.parse(localStorage.getItem('wishlistSam')) || [];
+      items.splice(index, 1); // Remove the item at that index
+      localStorage.setItem('wishlistSam', JSON.stringify(items));
+      renderWishlist(); // Refresh the list
+    }
+
+    function clearWishlist() {
+      localStorage.removeItem('wishlistSam');
+      renderWishlist(); // Refresh the list
+    }
+
+    // Load on page load
+    renderWishlist();
+  </script>
+</body>
+</html>
