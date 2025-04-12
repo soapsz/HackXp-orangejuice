@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Leaderboard</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f0f2f5;
+      padding: 30px;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    table {
+      width: 60%;
+      margin: 0 auto;
+      border-collapse: collapse;
+      background-color: white;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 15px;
+      text-align: center;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      background-color: #007bff;
+      color: white;
+    }
+    tr:hover {
+      background-color: #f1f1f1;
+    }
+    .gold { background-color: #ffd70033; }
+    .silver { background-color: #c0c0c033; }
+    .bronze { background-color: #cd7f3233; }
+  </style>
+</head>
+<body>
+
+  <h1 id="leaderboardTitle"></h1>
+  <h1 id="leaderboardTitle2"></h1>
+
+  <table>
+    <tr>
+      <th width="20%">Rank</th>
+      <th width="30%">Gifter</th>
+      <th width="30%">Giftee</th>
+      <th width="20%">Score</th>
+    </tr>
+    <tr class="rank1">
+      <td id="rank1rank">👑 ULTIMATE BESTIES</td>
+      <td id="rank1gifter"></td>
+      <td id="rank1giftee"></td>
+      <td id="rank1points"></td>
+    </tr>
+    <tr class="rank2">
+      <td id="rank2rank">💎 STRONG BOND</td>
+      <td id="rank2gifter"></td>
+      <td id="rank2giftee"></td>
+      <td id="rank2points"></td>
+    </tr>
+    <tr class="rank3">
+      <td id="rank3rank">🌟 ALMOST DECENT</td>
+      <td id="rank3gifter"></td>
+      <td id="rank3giftee"></td>
+      <td id="rank3points"></td>
+    </tr>
+    <tr class="rank4">
+      <td id="rank4rank">💔 ONE-SIDED</td>
+      <td id="rank4gifter"></td>
+      <td id="rank4giftee"></td>
+      <td id="rank4points"></td>
+    </tr>
+    <tr class="rank5">
+      <td id="rank5rank">🚮 TRASH TIER</td>
+      <td id="rank5gifter"></td>
+      <td id="rank5giftee"></td>
+      <td id="rank5points"></td>
+    </tr>
+  </table>
+
+  <script src="localStorageHandler.js"></script>
+  <script src="leaderboard.js"></script>
+</body>
+</html>
