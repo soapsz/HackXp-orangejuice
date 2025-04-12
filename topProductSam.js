@@ -55,7 +55,7 @@ async function getTopProducts(keyword) {
       <a href="${p.link}" target="_blank"><img src="${p.image}" alt="Product Image"></a>
       <h3>${p.title}</h3>
       <p>${p.description}</p>
-      <button onclick='addToCart(${JSON.stringify(p)})'>Add to Cart</button>
+      <p><button onclick='addToCart(${JSON.stringify(p)})'>Add to Cart</button></p>
     </div>
   `).join('')}
   <br>
